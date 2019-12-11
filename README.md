@@ -8,12 +8,22 @@ The following environment variables are required:
 MINIO_ENDPOINT=
 MINIO_ACCESS_KEY=
 MINIO_SECRET_KEY=
-# required if docker, else default to 5380
+CELERY_BROKER_URL=
+CELERY_RESULT_BACKEND=
 PORT=
-# required if docker
 ENVIRONMENT=
 # required if docker
 GITHUB_OAUTH_TOKEN
+```
+
+To run a redis instance, run the following comands:
+```
+docker run -d -p 6379:6379 redis
+```
+
+To run celery
+```
+celery -A app.celery worker
 ```
 
 To run a local version of minio, run the following commands

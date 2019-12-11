@@ -5,5 +5,5 @@ import os
 port = os.environ.get('PORT', 5380)
 
 if __name__ == '__main__':
-    app.run(port=port, host='0.0.0.0')
+    app.run(port=port, host='0.0.0.0', debug=True)
 
