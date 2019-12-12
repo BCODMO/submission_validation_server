@@ -6,7 +6,7 @@ import json
 
 from app.exceptions import InvalidUsage
 from app.validate import validate_submission_file
-from app.submission import get_submission_files
+from app.submission import get_submission_files, add_datapackage
 
 
 
@@ -50,7 +50,10 @@ def submission():
         body = request.json
         submission_title = body.get('submission_title', None)
         try:
-            submission_files = get_submission_files(submission_title)
+            # Get the submission files and a datapackage created with those files + other metadata
+            submission_files, dp = get_submission_files(submission_title)
+            # Add the datapackage to the minio s3 store
+            add_datapackage(dp)
             for submission_file in submission_files:
                 validate_submission_file_task.delay(submission_file)
             res = { 'accepted': True }
