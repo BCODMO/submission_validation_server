@@ -8,6 +8,7 @@ from minio.error import (
 )
 
 BUCKET = 'submissions'
+FILES_PREFIX = 'files'
 
 def get_object(mc, object_name):
     res = mc.get_object(BUCKET, object_name)

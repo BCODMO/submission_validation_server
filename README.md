@@ -12,6 +12,10 @@ CELERY_BROKER_URL=
 CELERY_RESULT_BACKEND=
 PORT=
 ENVIRONMENT=
+# copies of above env variables for boto
+S3_ENDPOINT=
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
 # required if docker
 GITHUB_OAUTH_TOKEN
 ```

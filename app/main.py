@@ -7,6 +7,7 @@ import json
 from app.exceptions import InvalidUsage
 from app.validate import validate_submission_file
 from app.submission import get_submission_files, add_datapackage
+from app.schema import infer_schema
 
 
 
@@ -44,11 +45,33 @@ celery = make_celery(app)
 def validate_submission_file_task(self, submission_file):
     validate_submission_file(submission_file)
 
+@app.route('/schema', methods=['GET'])
+def schema():
+    if request.method == 'GET':
+        submission_title = request.args.get('submission_title', None)
+        filename = request.args.get('filename', None)
+        try:
+            # Get the submission files and a datapackage created with those files + other metadata
+            resource_schema = infer_schema(submission_title, filename)
+            # Add the datapackage to the minio s3 store
+            res = { 'resource_schema': resource_schema }
+            return json.dumps(res)
+        except Exception as e:
+            raise e
+            raise InvalidUsage(
+                f'Error when starting to validate a submission: {str(e)}'
+            )
+        return None
+
 @app.route('/submission/', methods=['', 'POST'])
 def submission():
     if request.method == 'POST':
         body = request.json
+        print(body)
         submission_title = body.get('submission_title', None)
+        filename = body.get('filename', None)
+        resource = body.get('resource', {})
+        print(resource)
         try:
             # Get the submission files and a datapackage created with those files + other metadata
             submission_files, dp = get_submission_files(submission_title)
