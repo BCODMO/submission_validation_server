@@ -13,7 +13,7 @@ CELERY_RESULT_BACKEND=(localhost:6379)
 PORT=(5380)
 ENVIRONMENT=(development)
 # copies of above env variables for boto
-S3_ENDPOINT=
+S3_ENDPOINT=(http://localhost:9000)
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 # required if docker
