@@ -5,13 +5,13 @@ A server that runs goodtables validations on submissions
 
 The following environment variables are required:
 ```
-MINIO_ENDPOINT=
-MINIO_ACCESS_KEY=
-MINIO_SECRET_KEY=
-CELERY_BROKER_URL=
-CELERY_RESULT_BACKEND=
-PORT=
-ENVIRONMENT=
+MINIO_ENDPOINT=(localhost:9000)
+MINIO_ACCESS_KEY=(ACCESS_KEY_HERE)
+MINIO_SECRET_KEY=(SECRET_KEY_HERE)
+CELERY_BROKER_URL=(localhost:6379)
+CELERY_RESULT_BACKEND=(localhost:6379)
+PORT=(5380)
+ENVIRONMENT=(development)
 # copies of above env variables for boto
 S3_ENDPOINT=
 AWS_ACCESS_KEY_ID=
@@ -27,6 +27,7 @@ docker run -d -p 6379:6379 redis
 
 To run celery
 ```
+sudo apt install python-celery-common
 celery -A app.celery worker
 ```
 
