@@ -54,7 +54,7 @@ def schema():
             # Get the submission files and a datapackage created with those files + other metadata
             resource_schema = infer_schema(submission_title, filename)
             # Add the datapackage to the minio s3 store
-            res = { 'resource_schema': resource_schema }
+            res = { 'resources': resource_schema }
             return json.dumps(res)
         except Exception as e:
             raise e
