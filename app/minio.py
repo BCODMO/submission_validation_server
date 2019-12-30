@@ -7,8 +7,7 @@ from minio.error import (
     NoSuchBucket,
 )
 
-BUCKET = 'submissions'
-FILES_PREFIX = 'files'
+from .constants import BUCKET, FILES_PREFIX
 
 def get_object(mc, object_name):
     res = mc.get_object(BUCKET, object_name)

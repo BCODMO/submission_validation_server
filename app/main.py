@@ -5,7 +5,7 @@ import logging
 import json
 
 from app.exceptions import InvalidUsage
-from app.validate import validate_submission_file
+from app.validate import validate_resource
 from app.submission import get_submission_files, add_datapackage
 from app.schema import infer_schema
 
@@ -42,8 +42,8 @@ celery = make_celery(app)
 # acks_late and reject_on_worker_lost ensure that the process is placed
 # back onto the queue if it ends prematurely via a server restart
 @celery.task(bind=True, acks_late=True, reject_on_worker_lost=True)
-def validate_submission_file_task(self, submission_file):
-    validate_submission_file(submission_file)
+def validate_resource_task(self, resource):
+    validate_resource(resource)
 
 @app.route('/schema', methods=['GET'])
 def schema():
@@ -52,33 +52,21 @@ def schema():
         filename = request.args.get('filename', None)
         try:
             # Get the submission files and a datapackage created with those files + other metadata
-            resource_schema = infer_schema(submission_title, filename)
-            # Add the datapackage to the minio s3 store
-            res = { 'resources': resource_schema }
+            resources = infer_schema(submission_title, filename)
+            res = { 'resources': resources, 'validating': True }
             return json.dumps(res)
         except Exception as e:
             raise e
             raise InvalidUsage(
-                f'Error when starting to validate a submission: {str(e)}'
+                f'Error while inferring the schema of a submission: {str(e)}'
             )
         return None
-
-@app.route('/submission/', methods=['', 'POST'])
-def submission():
+@app.route('/validate', methods=['POST'])
+def validate():
     if request.method == 'POST':
-        body = request.json
-        print(body)
-        submission_title = body.get('submission_title', None)
-        filename = body.get('filename', None)
-        resource = body.get('resource', {})
-        print(resource)
+        resource = request.json
         try:
-            # Get the submission files and a datapackage created with those files + other metadata
-            submission_files, dp = get_submission_files(submission_title)
-            # Add the datapackage to the minio s3 store
-            add_datapackage(dp)
-            for submission_file in submission_files:
-                validate_submission_file_task.delay(submission_file)
+            validate_resource_task.delay(resource)
             res = { 'accepted': True }
             return json.dumps(res)
         except Exception as e:
@@ -87,8 +75,6 @@ def submission():
                 f'Error when starting to validate a submission: {str(e)}'
             )
         return None
-
-
 
 
 logging.basicConfig()
