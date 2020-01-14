@@ -12,6 +12,7 @@ CELERY_BROKER_URL=(localhost:6379)
 CELERY_RESULT_BACKEND=(localhost:6379)
 PORT=(5380)
 ENVIRONMENT=(development)
+SUBMISSION_VALIDATION_RESULT_URL=(localhost:8080/file/validationResult)
 # copies of above env variables for boto
 S3_ENDPOINT=(http://localhost:9000)
 AWS_ACCESS_KEY_ID=

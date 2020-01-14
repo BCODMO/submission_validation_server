@@ -43,20 +43,23 @@ celery = make_celery(app)
 # back onto the queue if it ends prematurely via a server restart
 @celery.task(bind=True, acks_late=True, reject_on_worker_lost=True)
 def validate_resource_task(self, resource):
-    validate_resource(resource)
+    validation_result_url = app.config.get('SUBMISSION_VALIDATION_RESULT_URL')
+    validate_resource(resource, validation_result_url)
 
-@app.route('/schema', methods=['GET'])
+@app.route('/schema', methods=['POST'])
 def schema():
-    if request.method == 'GET':
-        submission_title = request.args.get('submission_title', None)
-        filename = request.args.get('filename', None)
+    if request.method == 'POST':
+        args = request.json
+        print('ARGS', args)
+        submission_title = args.get('submission_title', None)
+        filename = args.get('filename', None)
+        options = args.get('options', {})
         try:
             # Get the submission files and a datapackage created with those files + other metadata
-            resources = infer_schema(submission_title, filename)
+            resources = infer_schema(submission_title, filename, options)
             res = { 'resources': resources, 'validating': True }
             return json.dumps(res)
         except Exception as e:
-            raise e
             raise InvalidUsage(
                 f'Error while inferring the schema of a submission: {str(e)}'
             )
