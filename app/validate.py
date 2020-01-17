@@ -6,7 +6,33 @@ def validate_resource(resource, validation_result_url):
     print(f'Starting the validation of a resource')
     object_key = resource[BCODMO_METADATA_KEY]['objectKey']
     object_name = f's3://{BUCKET}/{object_key}'
-    report = validate(object_name, infer_schema=True)
+    options = {}
+    checks = ['structure', 'schema']
+    if 'schema' in resource:
+        if 'headers' in resource['schema'][BCODMO_METADATA_KEY]:
+            options['headers'] = resource['schema'][BCODMO_METADATA_KEY]['headers']
+        for field in resource['schema']['fields']:
+            if field[BCODMO_METADATA_KEY].get('definition', None) == 'latitude':
+                checks.append({
+                    'minimum_constraint': {
+                        'column': field['name'],
+                        'constraint': 500,
+                    }
+                })
+    print('Options', options)
+    try:
+        report = validate(object_name, infer_schema=True, checks=checks, **options)
+        status = 'validate-success'
+        if not report['valid']:
+            status = 'validate-error'
+    except Exception as e:
+        status= 'validate-error'
+        report = {
+            'valid': False,
+            'tables': [],
+            'error': str(e),
+        }
+
     '''
     if 'tables' in report:
         for table in report['tables']:
@@ -25,9 +51,7 @@ def validate_resource(resource, validation_result_url):
     # Get sheet here and pass in
     import time
     #time.sleep(10)
-    status = 'validate-success'
-    if not report['valid']:
-        status = 'validate-error'
+
     data = {
         'submissionTitle': resource[BCODMO_METADATA_KEY]['submissionTitle'],
         'resourceName': resource['name'],

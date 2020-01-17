@@ -6,7 +6,6 @@ import json
 
 from app.exceptions import InvalidUsage
 from app.validate import validate_resource
-from app.submission import get_submission_files, add_datapackage
 from app.schema import infer_schema
 
 
