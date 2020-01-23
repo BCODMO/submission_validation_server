@@ -21,7 +21,7 @@ def infer_schema(submission_title, filename, options):
     object_key = f'{submission_title}/{FILES_PREFIX}/{filename}'
     object_name = f's3://{BUCKET}/{object_key}'
     lat_col = options.pop('latitudeCol', None)
-    lon_col = options.pop('longiudeCol', None)
+    lon_col = options.pop('longitudeCol', None)
 
     if (filename.endswith('.xls') or filename.endswith('.xlsx')):
         if 'sheet' in options:
@@ -66,7 +66,7 @@ def infer_schema(submission_title, filename, options):
         print('Resourc eoptions', resource['options'])
         options = resource['options']
         table = Table(resource['object_name'], **options)
-        table.infer()
+        table.infer(confidence=1)
         schema = table.schema.descriptor
         schema[BCODMO_METADATA_KEY] = {}
         for field in schema['fields']:
@@ -75,11 +75,11 @@ def infer_schema(submission_title, filename, options):
         # Add the options to the resource schema so they can be persisted later
         if 'headers' in options:
             schema[BCODMO_METADATA_KEY]['headers'] = options['headers']
-        if lat_col:
-            for field in schema['fields']:
-                if field['name'] == lat_col:
-                    # Better name here?
-                    field[BCODMO_METADATA_KEY]['definition'] = 'latitude'
+        for field in schema['fields']:
+            if lat_col and field['name'] == lat_col:
+                field[BCODMO_METADATA_KEY]['definition'] = 'latitude'
+            if lon_col and field['name'] == lon_col:
+                field[BCODMO_METADATA_KEY]['definition'] = 'longitude'
         print('SCHEMA', schema)
         resObj = {
             'resource_name': resource['resource_name'],

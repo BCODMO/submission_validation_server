@@ -1,6 +1,7 @@
 from goodtables import validate
 import requests
 from .constants import BCODMO_METADATA_KEY, BUCKET
+from .checks import latitude, longitude
 
 def validate_resource(resource, validation_result_url):
     print(f'Starting the validation of a resource')
@@ -12,14 +13,19 @@ def validate_resource(resource, validation_result_url):
         if 'headers' in resource['schema'][BCODMO_METADATA_KEY]:
             options['headers'] = resource['schema'][BCODMO_METADATA_KEY]['headers']
         for field in resource['schema']['fields']:
-            if field[BCODMO_METADATA_KEY].get('definition', None) == 'latitude':
+            definition = field[BCODMO_METADATA_KEY].get('definition', None)
+            if definition == 'latitude':
                 checks.append({
-                    'minimum_constraint': {
-                        'column': field['name'],
-                        'constraint': 500,
-                    }
+                    'latitude-bounds': {
+                        'constraint': field["name"],
+                    },
                 })
-    print('Options', options)
+            if definition == 'longitude':
+                checks.append({
+                    'longitude-bounds': {
+                        'constraint': field["name"],
+                    },
+                })
     try:
         report = validate(object_name, infer_schema=True, checks=checks, **options)
         status = 'validate-success'
