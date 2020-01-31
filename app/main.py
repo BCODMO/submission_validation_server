@@ -3,6 +3,7 @@ from flask_cors import CORS, cross_origin
 from celery import Celery
 import logging
 import json
+from .constants import BCODMO_METADATA_KEY
 
 from app.exceptions import InvalidUsage
 from app.validate import validate_resource
@@ -67,6 +68,8 @@ def schema():
 def validate():
     if request.method == 'POST':
         resource = request.json
+        if 'status' in resource[BCODMO_METADATA_KEY] and resource[BCODMO_METADATA_KEY]['status'] == 'validating':
+            raise InvalidUsage('This resource is already being validated')
         try:
             validate_resource_task.delay(resource)
             res = { 'accepted': True }

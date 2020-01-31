@@ -64,6 +64,7 @@ def validate_resource(resource, validation_result_url):
         'status': status,
         'report': report,
     }
+    print("Posting to ", validation_result_url)
     r = requests.post(
         url = validation_result_url,
         json = data,
