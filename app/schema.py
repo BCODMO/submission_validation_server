@@ -66,11 +66,24 @@ def infer_schema(submission_title, filename, options):
         print('Resourc eoptions', resource['options'])
         options = resource['options']
         table = Table(resource['object_name'], **options)
-        table.infer(confidence=1)
+        if 'missingValues' in options:
+            table.infer(confidence=1, missing_values=options['missingValues'])
+        else:
+            table.infer(confidence=1)
+
         schema = table.schema.descriptor
+
+        if 'missingValues' in options:
+            schema.update({ 'missingValues': options['missingValues'] })
+
+        # Create BCODMO_METADATA_KEY and add sample_rows
+        sample_rows = table.read(cast=False, limit=5)
         schema[BCODMO_METADATA_KEY] = {}
-        for field in schema['fields']:
-            field[BCODMO_METADATA_KEY] = {}
+        for i in range(len(schema['fields'])):
+            field = schema['fields'][i]
+            field[BCODMO_METADATA_KEY] = {
+                'sample_rows': [r[i] for r in sample_rows],
+            }
 
         # Add the options to the resource schema so they can be persisted later
         if 'headers' in options:

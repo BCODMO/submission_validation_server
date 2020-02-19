@@ -9,7 +9,9 @@ def validate_resource(resource, validation_result_url):
     object_name = f's3://{BUCKET}/{object_key}'
     options = {}
     checks = ['structure', 'schema']
+    schema = None
     if 'schema' in resource:
+        schema = resource['schema']
         if 'headers' in resource['schema'][BCODMO_METADATA_KEY]:
             options['headers'] = resource['schema'][BCODMO_METADATA_KEY]['headers']
         for field in resource['schema']['fields']:
@@ -27,7 +29,10 @@ def validate_resource(resource, validation_result_url):
                     },
                 })
     try:
-        report = validate(object_name, infer_schema=True, checks=checks, **options)
+        if not schema:
+            report = validate(object_name, infer_schema=True, checks=checks, **options)
+        else:
+            report = validate(object_name, schema=schema, checks=checks, **options)
         status = 'validate-success'
         if not report['valid']:
             status = 'validate-error'
