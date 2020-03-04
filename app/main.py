@@ -44,7 +44,8 @@ celery = make_celery(app)
 @celery.task(bind=True, acks_late=True, reject_on_worker_lost=True)
 def validate_resource_task(self, resource):
     validation_result_url = app.config.get('SUBMISSION_VALIDATION_RESULT_URL')
-    validate_resource(resource, validation_result_url)
+    submission_api_key = app.config.get('SUBMISSION_API_KEY')
+    validate_resource(resource, validation_result_url, submission_api_key)
 
 @app.route('/schema', methods=['POST'])
 def schema():

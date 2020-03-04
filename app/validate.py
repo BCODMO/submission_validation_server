@@ -3,13 +3,15 @@ import requests
 from .constants import BCODMO_METADATA_KEY, BUCKET
 from .checks import latitude, longitude
 
-def validate_resource(resource, validation_result_url):
+def validate_resource(resource, validation_result_url, submission_api_key):
     print(f'Starting the validation of a resource')
     object_key = resource[BCODMO_METADATA_KEY]['objectKey']
     object_name = f's3://{BUCKET}/{object_key}'
     options = {}
     checks = ['structure', 'schema']
     schema = None
+    if 'sheet' in resource:
+        options['sheet'] = resource['sheet']
     if 'schema' in resource:
         schema = resource['schema']
         if 'headers' in resource['schema'][BCODMO_METADATA_KEY]:
@@ -61,13 +63,15 @@ def validate_resource(resource, validation_result_url):
     '''
     # Get sheet here and pass in
     import time
-    #time.sleep(10)
+    time.sleep(0)
 
     data = {
         'submissionTitle': resource[BCODMO_METADATA_KEY]['submissionTitle'],
         'resourceName': resource['name'],
         'status': status,
         'report': report,
+        # The API key in order to authenticate with the other server
+        'submissionApiKey': submission_api_key,
     }
     print("Posting to ", validation_result_url)
     r = requests.post(

@@ -1,9 +1,11 @@
-# submission-validation 
+# submission-validation
+
 A server that runs goodtables validations on submissions
 
 # To run
 
 The following environment variables are required:
+
 ```
 MINIO_ENDPOINT=(localhost:9000)
 MINIO_ACCESS_KEY=(ACCESS_KEY_HERE)
@@ -17,16 +19,20 @@ SUBMISSION_VALIDATION_RESULT_URL=(localhost:8080/file/validationResult)
 S3_ENDPOINT=(http://localhost:9000)
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
+# A key to communicate with the go server
+SUBMISSION_API_KEY=
 # required if docker
 GITHUB_OAUTH_TOKEN
 ```
 
 To run a redis instance, run the following comands:
+
 ```
 docker run -d -p 6379:6379 redis
 ```
 
 To run celery
+
 ```
 sudo apt install python-celery-common
 celery -A app.celery worker
@@ -40,4 +46,3 @@ docker run -p 9000:9000 -e "MINIO_ACCESS_KEY=ACCESS_KEY_HERE" -e "MINIO_SECRET_K
 ```
 
 and set the environment variables accordingly
-
