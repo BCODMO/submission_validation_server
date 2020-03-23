@@ -1,14 +1,20 @@
 from goodtables import validate
 import requests
 from .constants import BCODMO_METADATA_KEY, BUCKET
-from .checks import latitude, longitude
+from .checks import latitude, longitude, header_name_invalid
+import logging
 
 def validate_resource(resource, validation_result_url, submission_api_key):
     print(f'Starting the validation of a resource')
     object_key = resource[BCODMO_METADATA_KEY]['objectKey']
     object_name = f's3://{BUCKET}/{object_key}'
     options = {}
-    checks = ['structure', 'schema']
+    checks = [
+        'structure',
+        'schema',
+        # Custom checks
+        { 'header-name-invalid': {} },
+    ]
     schema = None
     if 'sheet' in resource:
         options['sheet'] = resource['sheet']
@@ -39,6 +45,7 @@ def validate_resource(resource, validation_result_url, submission_api_key):
         if not report['valid']:
             status = 'validate-error'
     except Exception as e:
+        logging.error(f'Error while validating {str(e)}')
         status= 'validate-error'
         report = {
             'valid': False,
