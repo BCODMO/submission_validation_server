@@ -1,5 +1,6 @@
 from tableschema import Table
 from tabulator.loaders.aws import AWSLoader
+from datapackage.exceptions import CastError
 import re
 import openpyxl
 import os
@@ -63,13 +64,15 @@ def infer_schema(submission_title, filename, options):
 
     res = []
     for resource in resources:
-        print('Resourc eoptions', resource['options'])
-        options = resource['options']
         table = Table(resource['object_name'], **options)
         if 'missingValues' in options:
             table.infer(confidence=1, missing_values=options['missingValues'])
         else:
             table.infer(confidence=1)
+
+        # Update the schema to desired human input
+        table.schema.update_field('col1', { "name": "col1", "type": "number", "format": "default" })
+        table.schema.commit(strict=True)
 
         schema = table.schema.descriptor
 
@@ -78,6 +81,7 @@ def infer_schema(submission_title, filename, options):
 
         # Create BCODMO_METADATA_KEY and add sample_rows
         sample_rows = table.read(cast=False, limit=5)
+
         schema[BCODMO_METADATA_KEY] = {}
         for i in range(len(schema['fields'])):
             field = schema['fields'][i]
@@ -93,7 +97,7 @@ def infer_schema(submission_title, filename, options):
                 field[BCODMO_METADATA_KEY]['definition'] = 'latitude'
             if lon_col and field['name'] == lon_col:
                 field[BCODMO_METADATA_KEY]['definition'] = 'longitude'
-        print('SCHEMA', schema)
+
         resObj = {
             'resource_name': resource['resource_name'],
             'schema': schema,

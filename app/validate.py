@@ -4,56 +4,62 @@ from .constants import BCODMO_METADATA_KEY, BUCKET
 from .checks import latitude, longitude, header_name_invalid
 import logging
 
+
 def validate_resource(resource, validation_result_url, submission_api_key):
-    print(f'Starting the validation of a resource')
-    object_key = resource[BCODMO_METADATA_KEY]['objectKey']
-    object_name = f's3://{BUCKET}/{object_key}'
+    print(f"Starting the validation of a resource")
+    object_key = resource[BCODMO_METADATA_KEY]["objectKey"]
+    object_name = f"s3://{BUCKET}/{object_key}"
     options = {}
     checks = [
-        'structure',
-        'schema',
+        "structure",
+        "schema",
         # Custom checks
-        { 'header-name-invalid': {} },
+        {"header-name-invalid": {}},
     ]
     schema = None
-    if 'sheet' in resource:
-        options['sheet'] = resource['sheet']
-    if 'schema' in resource:
-        schema = resource['schema']
-        if 'headers' in resource['schema'][BCODMO_METADATA_KEY]:
-            options['headers'] = resource['schema'][BCODMO_METADATA_KEY]['headers']
-        for field in resource['schema']['fields']:
-            definition = field[BCODMO_METADATA_KEY].get('definition', None)
-            if definition == 'latitude':
-                checks.append({
-                    'latitude-bounds': {
-                        'constraint': field["name"],
-                    },
-                })
-            if definition == 'longitude':
-                checks.append({
-                    'longitude-bounds': {
-                        'constraint': field["name"],
-                    },
-                })
+    if "sheet" in resource:
+        options["sheet"] = resource["sheet"]
+    if "schema" in resource:
+        schema = resource["schema"]
+        if "headers" in resource["schema"][BCODMO_METADATA_KEY]:
+            options["headers"] = resource["schema"][BCODMO_METADATA_KEY]["headers"]
+        for field in resource["schema"]["fields"]:
+            definition = field[BCODMO_METADATA_KEY].get("definition", None)
+            if definition == "latitude":
+                checks.append(
+                    {"latitude-bounds": {"constraint": field["name"],},}
+                )
+            if definition == "longitude":
+                checks.append(
+                    {"longitude-bounds": {"constraint": field["name"],},}
+                )
     try:
         if not schema:
             report = validate(object_name, infer_schema=True, checks=checks, **options)
         else:
             report = validate(object_name, schema=schema, checks=checks, **options)
-        status = 'validate-success'
-        if not report['valid']:
-            status = 'validate-error'
+        if "tables" in report:
+            for table in report["tables"]:
+                if not "warnings" in table or not table["warnings"]:
+                    table["warnings"] = []
+            print("Adding warnings array")
+            report["warnings"] = []
+        status = "validate-success"
+        print("REPORT", report)
+        if not report["valid"]:
+            status = "validate-error"
     except Exception as e:
-        logging.error(f'Error while validating {str(e)}')
-        status= 'validate-error'
+        raise e
+        logging.error(f"Error while validating {str(e)}")
+        status = "validate-error"
         report = {
-            'valid': False,
-            'tables': [],
-            'error': str(e),
+            "valid": False,
+            "tables": [],
+            "warnings": [],
+            "error": str(e),
         }
 
-    '''
+    """
     if 'tables' in report:
         for table in report['tables']:
             if 'errors' in table:
@@ -67,23 +73,21 @@ def validate_resource(resource, validation_result_url, submission_api_key):
                         error['row'] = None
                 print('errors after', table['errors'])
             table['source'] = resource['name']
-    '''
+    """
     # Get sheet here and pass in
     import time
+
     time.sleep(0)
 
     data = {
-        'submissionTitle': resource[BCODMO_METADATA_KEY]['submissionTitle'],
-        'resourceName': resource['name'],
-        'status': status,
-        'report': report,
+        "submissionTitle": resource[BCODMO_METADATA_KEY]["submissionTitle"],
+        "resourceName": resource["name"],
+        "status": status,
+        "report": report,
         # The API key in order to authenticate with the other server
-        'submissionApiKey': submission_api_key,
+        "submissionApiKey": submission_api_key,
     }
     print("Posting to ", validation_result_url)
-    r = requests.post(
-        url = validation_result_url,
-        json = data,
-    )
+    r = requests.post(url=validation_result_url, json=data,)
     print(r.status_code, r.ok)
-    print('BOOM!')
+    print("BOOM!")

@@ -76,7 +76,6 @@ def validate():
             res = { 'accepted': True }
             return json.dumps(res)
         except Exception as e:
-            raise e
             raise InvalidUsage(
                 f'Error when starting to validate a submission: {str(e)}'
             )
