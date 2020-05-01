@@ -10,9 +10,9 @@ from app.validate import validate_resource
 from app.schema import infer_schema
 
 
-
 app = Flask(__name__)
 CORS(app)
+
 
 @app.errorhandler(InvalidUsage)
 def handle_invalid_usage(error):
@@ -20,8 +20,9 @@ def handle_invalid_usage(error):
     response.status_code = error.status_code
     return response
 
+
 def make_celery(app):
-    celery = Celery(app.import_name, broker=app.config.get('CELERY_BROKER_URL'))
+    celery = Celery(app.import_name, broker=app.config.get("CELERY_BROKER_URL"))
     celery.conf.update(app.config)
     TaskBase = celery.Task
 
@@ -31,11 +32,13 @@ def make_celery(app):
         def __call__(self, *args, **kwargs):
             with app.app_context():
                 return TaskBase.__call__(self, *args, **kwargs)
+
     celery.Task = ContextTask
 
     return celery
 
-app.config.from_pyfile('config.py')
+
+app.config.from_pyfile("config.py")
 
 celery = make_celery(app)
 
@@ -43,45 +46,48 @@ celery = make_celery(app)
 # back onto the queue if it ends prematurely via a server restart
 @celery.task(bind=True, acks_late=True, reject_on_worker_lost=True)
 def validate_resource_task(self, resource):
-    validation_result_url = app.config.get('SUBMISSION_VALIDATION_RESULT_URL')
-    submission_api_key = app.config.get('SUBMISSION_API_KEY')
-    validate_resource(resource, validation_result_url, submission_api_key)
+    validate_resource(resource)
 
-@app.route('/schema', methods=['POST'])
+
+@app.route("/schema", methods=["POST"])
 def schema():
-    if request.method == 'POST':
+    if request.method == "POST":
         args = request.json
-        print('ARGS', args)
-        submission_title = args.get('submission_title', None)
-        filename = args.get('filename', None)
-        options = args.get('options', {})
+        print("ARGS", args)
+        submission_title = args.get("submission_title", None)
+        filename = args.get("filename", None)
+        options = args.get("options", {})
         try:
             # Get the submission files and a datapackage created with those files + other metadata
             resources = infer_schema(submission_title, filename, options)
-            res = { 'resources': resources, 'validating': True }
+            res = {"resources": resources, "validating": True}
             return json.dumps(res)
         except Exception as e:
             raise InvalidUsage(
-                f'Error while inferring the schema of a submission: {str(e)}'
+                f"Error while inferring the schema of a submission: {str(e)}"
             )
         return None
-@app.route('/validate', methods=['POST'])
+
+
+@app.route("/validate", methods=["POST"])
 def validate():
-    if request.method == 'POST':
+    if request.method == "POST":
         resource = request.json
-        if 'status' in resource[BCODMO_METADATA_KEY] and resource[BCODMO_METADATA_KEY]['status'] == 'validating':
-            raise InvalidUsage('This resource is already being validated')
+        if (
+            "status" in resource[BCODMO_METADATA_KEY]
+            and resource[BCODMO_METADATA_KEY]["status"] == "validating"
+        ):
+            raise InvalidUsage("This resource is already being validated")
         try:
             validate_resource_task.delay(resource)
-            res = { 'accepted': True }
+            res = {"accepted": True}
             return json.dumps(res)
         except Exception as e:
             raise InvalidUsage(
-                f'Error when starting to validate a submission: {str(e)}'
+                f"Error when starting to validate a submission: {str(e)}"
             )
         return None
 
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
-
