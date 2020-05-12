@@ -52,13 +52,12 @@ def validate_resource_task(self, resource):
 def schema():
     if request.method == "POST":
         args = request.json
-        print("ARGS", args)
-        submission_title = args.get("submission_title", None)
+        submission_id = args.get("submission_id", None)
         filename = args.get("filename", None)
         options = args.get("options", {})
         try:
             # Get the submission files and a datapackage created with those files + other metadata
-            resources = infer_schema(submission_title, filename, options)
+            resources = infer_schema(submission_id, filename, options)
             res = {"resources": resources, "validating": True}
             return json.dumps(res)
         except Exception as e:

@@ -1,3 +1,5 @@
 Flask==1.0.2
+Flask-Cors==3.0.6
 celery==4.3.0
+redis==3.3.11
 git+ssh://git@github.com/bcodmo/submission_validation.git@master
