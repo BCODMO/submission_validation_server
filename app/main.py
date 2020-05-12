@@ -3,11 +3,10 @@ from flask_cors import CORS, cross_origin
 from celery import Celery
 import logging
 import json
-from .constants import BCODMO_METADATA_KEY
 
 from app.exceptions import InvalidUsage
-from app.validate import validate_resource
-from app.schema import infer_schema
+from submission_validation import infer_schema, validate_resource
+from submission_validation.constants import BCODMO_METADATA_KEY
 
 
 app = Flask(__name__)
