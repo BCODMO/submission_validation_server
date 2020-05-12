@@ -19,6 +19,7 @@ def clean_resource_name(name):
 
 
 def infer_schema(submission_title, filename, options):
+    print("OPTIONS", options)
     # TODO if xlsx/xls, infer a schema for each sheet
     object_key = f"{submission_title}/{FILES_PREFIX}/{filename}"
     object_name = f"s3://{BUCKET}/{object_key}"
@@ -70,8 +71,9 @@ def infer_schema(submission_title, filename, options):
     res = []
     for resource in resources:
         table = Table(resource["object_name"], **options)
-        if "missingValues" in options:
-            table.infer(confidence=1, missing_values=options["missingValues"])
+        missing_values = options.get("missingValues", None)
+        if missing_values:
+            table.infer(confidence=1, missing_values=missing_values)
         else:
             table.infer(confidence=1)
 
@@ -81,8 +83,22 @@ def infer_schema(submission_title, filename, options):
 
         schema = table.schema.descriptor
 
-        if "missingValues" in options:
-            schema.update({"missingValues": options["missingValues"]})
+        if missing_values:
+            schema.update({"missingValues": missing_values})
+        if "temporalFields" in options:
+            temporalFieldsDict = dict(
+                [(tf.get("field"), tf) for tf in options.get("temporalFields")]
+            )
+            for f in schema.get("fields", []):
+                name = f.get("name")
+                if name and name in temporalFieldsDict:
+                    tf = temporalFieldsDict[name]
+                    f.update(
+                        {
+                            "type": tf.get("type", "string"),
+                            "format": tf.get("format", ""),
+                        }
+                    )
 
         # Create BCODMO_METADATA_KEY and add sample_rows
         sample_rows = table.read(cast=False, limit=5)

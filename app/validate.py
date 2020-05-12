@@ -6,7 +6,7 @@ from .constants import BCODMO_METADATA_KEY, BUCKET
 from .checks import latitude, longitude, header_name_invalid
 import logging
 
-ROW_LIMIT = 100000
+ROW_LIMIT = 200000
 
 VALIDATION_RESULT_URL = os.environ.get("SUBMISSION_VALIDATION_RESULT_URL")
 SUBMISSION_API_KEY = os.environ.get("SUBMISSION_API_KEY")
@@ -75,6 +75,22 @@ def validate_resource(resource):
     submissionTitle = resource.get(BCODMO_METADATA_KEY, {}).get("submissionTitle", None)
     if not submissionTitle:
         raise Exception(f"No submission title passed to this task: {resource}")
+    warnings = report["warnings"]
+    new_warnings = []
+    for warning in warnings:
+        if warning.endswith(f"has reached {ROW_LIMIT} row(s) limit"):
+            new_warning = f"Validation was limited to {ROW_LIMIT} rows"
+        else:
+            new_warning = warning
+        new_warnings.append(new_warning)
+    report["warnings"] = new_warnings
+
+    # Make sure the error is not an exception type
+    for table in report.get("tables", []):
+        for error in table.get("errors", []):
+            md = error.get("message-data")
+            if md and type(md) != str:
+                error["message-data"] = str(md)
     data = {
         "submissionTitle": submissionTitle,
         "resourceName": resource.get("name", ""),
