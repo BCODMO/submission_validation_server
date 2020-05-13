@@ -10,6 +10,7 @@ The following environment variables are required:
 MINIO_ENDPOINT=(localhost:9000)
 MINIO_ACCESS_KEY=(ACCESS_KEY_HERE)
 MINIO_SECRET_KEY=(SECRET_KEY_HERE)
+MINIO_SUBMISSIONS_BUCKET=(submission)
 CELERY_BROKER_URL=(localhost:6379)
 CELERY_RESULT_BACKEND=(localhost:6379)
 PORT=(5380)
