@@ -57,34 +57,44 @@ def schema():
         options = args.get("options", {})
         try:
             # Get the submission files and a datapackage created with those files + other metadata
-            resources = infer_schema(submission_id, filename, options)
-            res = {"resources": resources, "validating": True}
-            return json.dumps(res)
+            schemas = infer_schema(submission_id, filename, options)
+            res = {
+                "statusCode": 200,
+                "body": {"error": False, "errorText": None, "schemas": schemas,},
+            }
         except Exception as e:
-            raise InvalidUsage(
-                f"Error while inferring the schema of a submission: {str(e)}"
-            )
-        return None
+            res = {
+                "statusCode": 500,
+                "body": {
+                    "error": True,
+                    "errorText": f"Error while inferring the schema of a submission: {str(e)}",
+                    "schemas": None,
+                },
+            }
+
+        return json.dumps(res), res.get("statusCode", 200)
 
 
 @app.route("/validate", methods=["POST"])
 def validate():
     if request.method == "POST":
         resource = request.json
-        if (
-            "status" in resource[BCODMO_METADATA_KEY]
-            and resource[BCODMO_METADATA_KEY]["status"] == "validating"
-        ):
-            raise InvalidUsage("This resource is already being validated")
         try:
             validate_resource_task.delay(resource)
-            res = {"accepted": True}
-            return json.dumps(res)
+            res = {
+                "statusCode": 200,
+                "body": {"accepted": True, "error": False, "errorText": None},
+            }
         except Exception as e:
-            raise InvalidUsage(
-                f"Error when starting to validate a submission: {str(e)}"
-            )
-        return None
+            res = {
+                "statusCode": 500,
+                "body": {
+                    "accepted": False,
+                    "errorText": f"Error when starting to validate a submission: {str(e)}",
+                    "error": True,
+                },
+            }
+        return json.dumps(res), 200
 
 
 logging.basicConfig()
